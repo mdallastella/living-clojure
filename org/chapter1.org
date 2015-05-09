@@ -23,7 +23,7 @@ need to arrange and access your data.
 
    List are collections of things:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/chapter1.clj
    '(1 2 "jam" :marmalade-jar)
    ;;-> (1 2 "jam" :marmalade-jar)
    #+END_SRC
