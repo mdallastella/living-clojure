@@ -1,0 +1,289 @@
+#+TITLE: Living Clojure - Chapter 1
+#+AUTHOR: Marco Dalla Stella
+#+EMAIL: marco@dallastella.name
+#+LANGUAGE: en
+#+STARTUP: align hidestars lognotestate
+
+* Introduction
+
+Clojure code is made up of expressions that are then evaluated to return a
+result. The simplest of these expressions are those that evaluate
+themselves. They're called *simple values* or *literals*.
+
+In Clojure, the function operator goes first, followed by the parameters that it
+needs.
+
+* Collections in Clojure
+
+There are a number of ways to organize your data in Clojure collections. There
+are *lists*, *vectors*, *maps* and *sets*. Which one you use depends on how you
+need to arrange and access your data.
+
+** List collections
+
+   List are collections of things:
+
+   #+BEGIN_SRC clojure
+   '(1 2 "jam" :marmalade-jar)
+   ;;-> (1 2 "jam" :marmalade-jar)
+   #+END_SRC
+
+   We can mix and match values such as strings, integers and keywords in our
+   collections, Clojure doesn't mind.
+
+   You will hear the word *idiomatic* quite often in relation of Clojure. This
+   refers to the style in which Clojurist write their code. In Clojure
+   collections you can use use commas, but it's idiomatic not to.
+
+*** What can we do with lists
+
+    You can think of the list being made up of two parts: the first element of
+    the list and everything else.
+
+    #+BEGIN_SRC clojure
+    (first '(:rabbit :pocket-watch :marmalade :door))
+    ;;-> :rabbit
+
+    (rest '(:rabbit :pocket-watch :marmalade :door))
+    ;;-> (:pocket-watch :marmalade :door)
+    #+END_SRC
+
+    The *first* function returns the first element of a list, the *rest*
+    function returns a list of all the remaining elements.
+
+    How do we go about building up lists? The answer is simple, yet powerful. We
+    can build up lists with just one function, called *cons*.
+
+    #+BEGIN_SRC clojure
+    (cons 5 '())
+    ;;-> (5)
+
+    (cons 5 nil)
+    ;;-> (5)
+
+    (cons 4 (cons 5 nil))
+    ;;-> (4 5)
+    #+END_SRC
+
+    Now we build up our beautiful lists, but it was a bit of work. It's good to
+    know that we have quote/parens shortcuts available to us, as well as a
+    *list* function:
+
+    #+BEGIN_SRC clojure
+    '(1 2 3 4 5)
+    ;;-> (1 2 3 4 5)
+
+    (list 1 2 3 4 5)
+    ;;-> (1 2 3 4 5)
+    #+END_SRC
+
+    Lists are fine when you just want to get an element off the top of the
+    list. But what if you need to take an element in the middle of a collection?
+    What if you need index access? This is when you need a *vector*.
+
+** Vectors
+
+   Vectors are very handy and quite common in Clojure. You can spot theme by
+   their square brackets.
+
+   #+BEGIN_SRC clojure
+   [:jar 1 2 3 :jar2]
+   ;;-> [:jar 1 2 3 :jar2]
+   #+END_SRC
+
+   *first* and *rest* operators works on vectors too:
+
+   #+BEGIN_SRC clojure
+   (first [:jar1 1 2 3 :jar2])
+   ;;-> :jar1
+
+   (rest [:jar1 1 2 3 :jar2])
+   ;;-> (1 2 3 :jar2)
+   #+END_SRC
+
+   Unlike lists, in vectors, you have fast index access to the elements, using
+   the *nth* function:
+
+   #+BEGIN_SRC clojure
+   (nth [:jar1 1 2 3 :jar2] 0)
+   ;;-> :jar1
+
+   (nth [:jar1 1 2 3 :jar2] 2)
+   ;;-> 2
+   #+END_SRC
+
+   Another useful function is *last*, which returns the last element of the
+   vector. Although you can use *nth* and *last* on lists as well, you will get
+   better index access performance with vectors.
+
+   This is because access time of lists is $O(n)$ where access time in vectors
+   is $O(1)$, a direct access.
+
+   #+BEGIN_SRC clojure
+   (last [:rabbit :pocket-watch :door])
+   ;;-> :door
+
+   (last '(:rabbit :pocket-watch :door))
+   ;;-> :door
+   #+END_SRC
+
+** What collections have in common
+
+   All collections are *immutable* and *persistent*. Immutable means that the
+   value of the collection does not change. When we ask to *cons* an element to
+   a collection, the original collection is not changed. We are returned a new
+   version of the structure with just the element added to it. Persistent means
+   that these collections will do *smart* creations of new versions of
+   themselves by using structural sharing.
+
+   Other common functions are *count* and *conj*. Count function returns the
+   size of the collection:
+
+   #+BEGIN_SRC clojure
+   (count [1 2 3 4])
+   ;;-> 4
+   #+END_SRC
+
+   The *conj* function is rather interesting. It adds one or more elements to
+   the collection. However, it adds theme in the most natural way for /that/
+   data structure. For *vectors*, it will add the elements at the end of the
+   collection. For *list* instead, it will add the elements on the beginning:
+
+   #+BEGIN_SRC clojure
+   (conj [:toast :butter] :jam :honey)
+   ;;-> [:toast :butter :jam :honey]
+   #+END_SRC
+
+   For lists, instead, it will add the elements onto the beginning:
+
+   #+BEGIN_SRC clojure
+   ;; One element
+   (conj '(:toast :butter) :jam)
+   ;;-> (:jam :toast :butter)
+
+   ;; Multiple elements
+   (conj '(:toast :butter) :jam :honey)
+   ;;-> (:honey :jam :toast :butter)
+   #+END_SRC
+
+** Maps for storing key-value pairs of data
+
+   *Maps* are extremely useful and used extensively in Clojure as a way of
+   storing structured data by key-value pairs in a easily retrievable way.
+
+   #+BEGIN_SRC clojure
+   {:jam1 "strawberry" :jam2 "blackberry"}
+   ;;-> {:jam2 "blackberry", :jam1 "strawberry"}
+   #+END_SRC
+
+   You can get values out of maps using the *get* function and there is also a
+   way to provide a default value if the key is not found:
+
+   #+BEGIN_SRC clojure
+   ;; Simple get
+   (get {:jam1 "strawberry" :jam2 "blackberry"} :jam2)
+   ;;-> "blackberry"
+
+   ;; Get with a default value
+   (get {:jam1 "strawberry" :jam2 "blackberry"} :jam3 "not found")
+   ;;-> "not found"
+   #+END_SRC
+
+   A more idiomatic way to get the value from the map is to use the key itself
+   as a function:
+
+   #+BEGIN_SRC clojure
+   (:jam1 {:jam1 "strawberry" :jam2 "blackberry"})
+   ;;-> "strawberry"
+   #+END_SRC
+
+   What if we need to update the value of a map? Remember, collections are
+   immutable, so when we are talking about "updating" a value, we are speaking
+   shorthand for returning a new data structure with the updated value in
+   it. Clojure's persistent data structures use structural sharing that does the
+   creation very efficiently.
+
+   The *assoc* function associates the new key-value pairs to map:
+
+   #+BEGIN_SRC clojure
+   (assoc {:jam1 "red" :jam2 "black"} :jam1 "orange")
+   ;;-> {:jam2 "black", :jam1 "orange"}
+   #+END_SRC
+
+   Given a map and a key, the *dissoc* function returns a new map with the
+   key-value pair removed:
+
+   #+BEGIN_SRC clojure
+   (dissoc {:jam1 "strawberry" :jam2 "blackberry"} :jam1)
+   ;;-> {:jam2 "blackberry"}
+   #+END_SRC
+
+   The *merge* function is handy to merge the key-value pairs from one map to
+   the other:
+
+   #+BEGIN_SRC clojure
+   (merge
+    {:jam1 "red" :jam2 "black"}
+    {:jam1 "orange" :jam3 "red"}
+    {:jam4 "blue"})
+   ;;-> {:jam4 "blue", :jam3 "red", :jam2 "black", :jam1 "orange"}
+   #+END_SRC
+
+** Using sets for unique collections of data
+
+   *Sets* are useful for when you need a collection with no duplicates. You can
+    recognize them by the surrounding #{}:
+
+   #+BEGIN_SRC clojure
+   #{:red :blue :white :pink}
+   ;;-> #{:white :red :pink}
+
+   #{:red :blue :white :pink :pink}
+   ;;-> IllegalArgumentException Dplicate key: :pink
+   #+END_SRC
+
+   The fact that they're sets let us do some handy set operations as well, like
+   *union*, *difference* and *intersection* (prefix with clojure.set):
+
+   #+BEGIN_SRC clojure
+   (clojure.set/union #{:r :b :w} #{:w :p :y})
+   ;;-> #{:y :r :w :b :p}
+
+   ;; Difference takes elements away from the first get
+   (clojure.set/difference #{:r :b :w} #{:w :p :y})
+   ;;-> #{:r :b}
+
+   ;; Intersection
+   (clojure.set/intersection #{:r :b :w} #{:w :p :y})
+   ;;-> #{:w}
+   #+END_SRC
+
+   You can convert another type of collection to a set using the *set*
+   function. Maps can be converted to set as well, key-values are turned into
+   vectors:
+
+   #+BEGIN_SRC clojure
+   (set [:r :w :b])
+   ;;-> #{:r :w :b}
+
+   (set {:a 1 :b 2 :c 3})
+   ;;-> #{[:c 3] [:b 2] [:a 1]}
+   #+END_SRC
+
+   To get an element from a set, you can use the *get* function or, if the
+   element you're looking for is a keyword, you can access it with that:
+
+   #+BEGIN_SRC clojure
+   (get #{:r :b :w} :r)
+   ;;-> :r
+
+   (get #{:r :b :w} :y)
+   ;;-> nil
+
+   (:r #{:r :w :b})
+   ;;-> :r
+
+   ;; The set itself can be used as a function of its element
+   (#{:r :w :b} :r)
+   ;;-> :r
+   #+END_SRC
