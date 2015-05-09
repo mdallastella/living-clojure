@@ -23,7 +23,7 @@ need to arrange and access your data.
 
    List are collections of things:
 
-   #+BEGIN_SRC clojure :tangle ../src/chapter1.clj
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    '(1 2 "jam" :marmalade-jar)
    ;;-> (1 2 "jam" :marmalade-jar)
    #+END_SRC
@@ -40,7 +40,7 @@ need to arrange and access your data.
     You can think of the list being made up of two parts: the first element of
     the list and everything else.
 
-    #+BEGIN_SRC clojure
+    #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
     (first '(:rabbit :pocket-watch :marmalade :door))
     ;;-> :rabbit
 
@@ -54,7 +54,7 @@ need to arrange and access your data.
     How do we go about building up lists? The answer is simple, yet powerful. We
     can build up lists with just one function, called *cons*.
 
-    #+BEGIN_SRC clojure
+    #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
     (cons 5 '())
     ;;-> (5)
 
@@ -69,7 +69,7 @@ need to arrange and access your data.
     know that we have quote/parens shortcuts available to us, as well as a
     *list* function:
 
-    #+BEGIN_SRC clojure
+    #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
     '(1 2 3 4 5)
     ;;-> (1 2 3 4 5)
 
@@ -86,14 +86,14 @@ need to arrange and access your data.
    Vectors are very handy and quite common in Clojure. You can spot theme by
    their square brackets.
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    [:jar 1 2 3 :jar2]
    ;;-> [:jar 1 2 3 :jar2]
    #+END_SRC
 
    *first* and *rest* operators works on vectors too:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (first [:jar1 1 2 3 :jar2])
    ;;-> :jar1
 
@@ -104,7 +104,7 @@ need to arrange and access your data.
    Unlike lists, in vectors, you have fast index access to the elements, using
    the *nth* function:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (nth [:jar1 1 2 3 :jar2] 0)
    ;;-> :jar1
 
@@ -119,7 +119,7 @@ need to arrange and access your data.
    This is because access time of lists is $O(n)$ where access time in vectors
    is $O(1)$, a direct access.
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (last [:rabbit :pocket-watch :door])
    ;;-> :door
 
@@ -139,7 +139,7 @@ need to arrange and access your data.
    Other common functions are *count* and *conj*. Count function returns the
    size of the collection:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (count [1 2 3 4])
    ;;-> 4
    #+END_SRC
@@ -149,14 +149,14 @@ need to arrange and access your data.
    data structure. For *vectors*, it will add the elements at the end of the
    collection. For *list* instead, it will add the elements on the beginning:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (conj [:toast :butter] :jam :honey)
    ;;-> [:toast :butter :jam :honey]
    #+END_SRC
 
    For lists, instead, it will add the elements onto the beginning:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    ;; One element
    (conj '(:toast :butter) :jam)
    ;;-> (:jam :toast :butter)
@@ -171,7 +171,7 @@ need to arrange and access your data.
    *Maps* are extremely useful and used extensively in Clojure as a way of
    storing structured data by key-value pairs in a easily retrievable way.
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    {:jam1 "strawberry" :jam2 "blackberry"}
    ;;-> {:jam2 "blackberry", :jam1 "strawberry"}
    #+END_SRC
@@ -179,7 +179,7 @@ need to arrange and access your data.
    You can get values out of maps using the *get* function and there is also a
    way to provide a default value if the key is not found:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    ;; Simple get
    (get {:jam1 "strawberry" :jam2 "blackberry"} :jam2)
    ;;-> "blackberry"
@@ -192,7 +192,7 @@ need to arrange and access your data.
    A more idiomatic way to get the value from the map is to use the key itself
    as a function:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (:jam1 {:jam1 "strawberry" :jam2 "blackberry"})
    ;;-> "strawberry"
    #+END_SRC
@@ -205,7 +205,7 @@ need to arrange and access your data.
 
    The *assoc* function associates the new key-value pairs to map:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (assoc {:jam1 "red" :jam2 "black"} :jam1 "orange")
    ;;-> {:jam2 "black", :jam1 "orange"}
    #+END_SRC
@@ -213,7 +213,7 @@ need to arrange and access your data.
    Given a map and a key, the *dissoc* function returns a new map with the
    key-value pair removed:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (dissoc {:jam1 "strawberry" :jam2 "blackberry"} :jam1)
    ;;-> {:jam2 "blackberry"}
    #+END_SRC
@@ -221,7 +221,7 @@ need to arrange and access your data.
    The *merge* function is handy to merge the key-value pairs from one map to
    the other:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (merge
     {:jam1 "red" :jam2 "black"}
     {:jam1 "orange" :jam3 "red"}
@@ -234,7 +234,7 @@ need to arrange and access your data.
    *Sets* are useful for when you need a collection with no duplicates. You can
     recognize them by the surrounding #{}:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    #{:red :blue :white :pink}
    ;;-> #{:white :red :pink}
 
@@ -245,7 +245,7 @@ need to arrange and access your data.
    The fact that they're sets let us do some handy set operations as well, like
    *union*, *difference* and *intersection* (prefix with clojure.set):
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (clojure.set/union #{:r :b :w} #{:w :p :y})
    ;;-> #{:y :r :w :b :p}
 
@@ -262,7 +262,7 @@ need to arrange and access your data.
    function. Maps can be converted to set as well, key-values are turned into
    vectors:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (set [:r :w :b])
    ;;-> #{:r :w :b}
 
@@ -273,7 +273,7 @@ need to arrange and access your data.
    To get an element from a set, you can use the *get* function or, if the
    element you're looking for is a keyword, you can access it with that:
 
-   #+BEGIN_SRC clojure
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
    (get #{:r :b :w} :r)
    ;;-> :r
 
@@ -287,3 +287,283 @@ need to arrange and access your data.
    (#{:r :w :b} :r)
    ;;-> :r
    #+END_SRC
+
+   There is also a way to query the set to see if an element is there
+   with the function *contains?*
+
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+   (contains? #{:r :b :w} :r)
+   ;;-> true
+
+   (contains? #{:r :b :w} :y)
+   ;;-> false
+   #+END_SRC
+
+   To add elements on a set, the collection function *conj* works just
+   fine.
+
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+   (conj #{:r :b :w} :y)
+   ;;-> #{:y :r :w :b}
+   #+END_SRC
+
+   And the function *disj* is used to remove elements.
+
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+   (disj #{:r :b :w} :b)
+   ;;-> #{:r :w}
+   #+END_SRC
+
+** Summary of simple values and collections
+
+   Simple values in Clojure:
+
+   - Strings
+   - Integers
+   - Ratios
+   - Decimals
+   - Keywords
+   - Characters
+   - Booleans
+
+   You can use this values in collections:
+   - List are for collections of data that you want to access from the
+     top of the list
+   - Vectors are for collections of data that you want to access
+     anywhere by position
+   - Maps are key-value pairs, which is great for organizing data and
+     having easy access
+   - Sets are for collections of unique elements and you can perform
+     set operations on them
+
+* List are the heart of Clojure
+
+The basic structure of Clojure come from its LISP nature. In LISP, the
+first element in an expression is considered to be an operator or
+function. Any elements after the first are considered to be data for
+the operator.
+
+All of this leads us to a very important discovery: *Code is data*!
+
+** Symbols and the art of binding
+
+   Clojure symbols refer to values. When a symbol is evaluated, it
+   returns the thing it refers to.
+
+   The function *def* allows us to give something a name, so we can
+   refer it from anywhere in our code.
+
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+   (def developer "Alice")
+   ;;-> #'user/developer
+   #+END_SRC
+
+   What did def do? It created a var object in the default *namespace*
+   of our REPL called "user", for the symbol "developer". Now when we
+   evaluate "developer" in the REPL, it will evaluate to "Alice".
+
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+   developer
+   ;;-> "Alice"
+
+   user/developer
+   ;;-> "Alice"
+   #+END_SRC
+
+   We now have the ability to create shorthand symbols for things and
+   refer to them later. But there's a couple of problems.
+
+   1. We don't want to create a global var for all the things
+   2. What do we do if we want to have a /temporary/ var?
+
+   The answer is to use the *let* function. Using let allows us to
+   have bindings to symbols that are only available within the context
+   of the let.
+
+   #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+   (def developer "Alice")
+   ;;-> #'user/developer
+
+   (let [developer "Alice in wonderland"]
+     developer)
+   ;;-> "Alice in wonderland"
+
+   developer
+   ;;-> "Alice"
+   #+END_SRC
+
+   The bindings of let are in a vector form. It excepts pairs of
+   symbols and values. This is another example of the power of *code
+   as data*.
+
+* Creating our own functions
+
+Let's see how to make functions with *defn*. defn is similar to def,
+but it creates vars for functions. It takes the following as
+arguments: *name* of the function, a *vector* of *parameters* and
+finally the *body* of the function.
+
+To call the function, simply use the function with parens. When we
+call a function, Clojure will evaluate it and return the result.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(defn follow-the-rabbit []
+  "Off we go!")
+;;-> #'user/follow-the-rabbit
+
+(follow-the-rabbit)
+;;-> "Off we go!"
+#+END_SRC
+
+A function can also be defined with parameters:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(defn shop-for-jam [jam1 jam2]
+  {:name "jam-basket"
+   :jam1 jam1
+   :jam2 jam2})
+;;-> #'user/shop-for-jam
+
+(shop-for-jam "strawberry" "blackberry")
+;;-> {:name "jam-basket", :jam1 "strawberry", :jam2 "blackberry"}
+#+END_SRC
+
+Sometimes you need *anonymous functions*. An anonymous function can be
+expressed with the *fn* operator. It takes the vector of parameters
+and then the body of the function and it can be called simply by
+calling the function with surrounding parens:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+;; Returns a function
+(fn [] (str "Off we go!"))
+;;-> #<user$eval7762$fn__7763 user$eval7762$fn__7763@5b20acbe>
+
+;; Anonymous function called
+((fn [] (str "Off we go")))
+;;-> "Off we go"
+#+END_SRC
+
+In fact, *defn* is just the same as using *def* and binding a name to
+the anonymous function:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(def follow-again
+  (fn [] (str "Off we " "go!")))
+;;-> #'user/follow-again
+
+(follow-again)
+;;-> "Off we go!"
+#+END_SRC
+
+There is a shorthand form of an anonymous function too. it uses a # in
+front of the parens:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(#(str "Off we " "go!"))
+;;-> "Off we go!"
+#+END_SRC
+
+If there are parameters you can use the percent (%) sign to represent
+them:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+;; One parameter
+(#(str "Off we " "go!" " - " %) "again")
+;;-> "Off we go! - again"
+
+;; Two or more parameters
+(#(str "Off we " "go!" " - " %1 %2) "again" "?")
+;;-> "Off we go! - again?"
+#+END_SRC
+
+You can now create all sorts of symbols. How do we keep everything
+organized? We'll use *namespaces*.
+
+* Keep your symbols organized in namespaces
+
+You can create your own /namespaces/ and switch to it using *ns*
+operator.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(ns alice.favfood)
+;;-> nil
+
+,*ns*
+;;-> #<Namespace alice.favfood>
+#+END_SRC
+
+If we define something here the var will be directly accessible by
+short name or by its fully-qualified name. If we switch namespace the
+symbol is accessible only by its fully-qualified name:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(ns alice.favfood)
+;;-> nil
+
+(def fav-food "jam")
+;;-> #'alice.favfood/fav-food
+
+fav-food
+;;-> "jam"
+
+alice.favfood/fav-food
+;;-> "jam"
+
+;; Change namespace
+(ns rabbit.favfood)
+;;-> nil
+
+fav-food
+;; RuntimeException: Unable to resolve symbol: fav-food in this context
+
+alice.favfood/fav-food
+;;-> "jam"
+#+END_SRC
+
+Clojure libs are made up of these names and symbols associated with
+these namespaces.
+There are three main ways of using libs in your namespace using
+*require*:
+
+1. Use the fully-qualified name of the symbol:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(clojure.set/union #{:r :w :b} #{:w :p :y})
+;;-> #{:y :r :w :b :p}
+#+END_SRC
+
+2. Using require with an alias defined in *:as*:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(require '[clojure.set :as set])
+;;-> nil
+
+(set/union #{:r :w :b} #{:w :p :y})
+;;-> #{:y :r :w :b :p}
+
+;; Or nester in the ns operator
+(ns wonderland
+  (:require [clojure.set :as set]))
+;;-> nil
+#+END_SRC
+
+3. The last way is to use *require* with the namespace and the
+   *:refer :all* options. This loads all the symbols and makes them
+   directly accessible in the current namespace. This can be risky,
+   because naming conflicts can occur. It's also harder to read the
+   code and figure out which function is coming from.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter1.clj
+(ns wonderland
+  (:require [clojure.set :refer :all]))
+;;-> nil
+
+(union #{:r :w :b} #{:w :p :y})
+;;-> #{:y :r :w :b :p}
+#+END_SRC
+
+Most Clojure code will use libs with a *require* and specify an alias
+using *:as*. Exceptions are tests, where it's common to use
+*clojure.test* functions directly as well as the namespaces you are
+testing. *use* expression works the same of *require* with
+*:refer :all* options, but *require* is preferred.
