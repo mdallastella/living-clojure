@@ -3,6 +3,7 @@
 #+EMAIL: marco@dallastella.name
 #+LANGUAGE: en
 #+STARTUP: align hidestars lognotestate
+#+INTERLEAVE_PDF: /Users/kral/Copy/Books/Programming/Clojure/Living_Clojure.pdf
 
 * Flow and functional transformations
 
@@ -651,3 +652,73 @@ function arguments and defining a position where the call is going to "jump"
 back to the recursion point.
 
 * The functional shape of data transformations
+
+We will take a look at two main ways to transform collections: *map* and
+*reduce*. The result of *map* doesn't change the _shape_ of the input, that means
+that number of elements in the resulting collection will be the same as the
+incoming collection. *reduce*, instead, can change the _shape_ of the output
+data, cause it can change the number of elements in the collection returned.
+
+** Map the ultimate
+
+*map* takes a function and a collection as arguments. The result of the *map*
+ will be a collection with the function applied to each _single_ element.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(def animals [:mouse :duck :dodo :eaglet])
+;;-> #'user/animals
+
+(#(str %) :mouse)
+;;-> ":mouse"
+
+(map #(str %) animals)
+;;-> (":mouse" ":duck" ":dodo" ":eaglet")
+
+(class (map #(str %) animals))
+;;-> clojure.lang.LazySeq
+#+END_SRC
+
+As we can see, *map* returns a lazy sequence, this means that we can deal with
+infinite sequences if we like:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(take 3 (map #(str %) (range)))
+;;-> ("0" "1" "2")
+
+(take 10 (map #(str %) (range)))
+;;-> ("0" "1" "2" "3" "4" "5" "6" "7" "8" "9")
+#+END_SRC
+
+Laziness needs to be handled with care. This is _very_ important to remember
+when working with functions that have /side effects/. A /pure/ function is one
+that, given the same input, always returns the same output, without any other
+observable interaction with the world. A /side effect/ is something else that
+occurs in the function that changes something in the outside world.
+
+We must be careful to make sure that the side effects are being executed when we
+want them to. In the case of *map*, just calling the function won't force the
+lazy evaluation on all the elements:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(println "Look at the mouse!")
+;;-> nil
+
+(def animals [:mouse :duck :dodo :lory :eaglet])
+;;-> #'user/animals
+
+(def animal-print (map #(println %) animals))
+;;-> #'user/animal-print
+
+animal-print
+;;-> (nil nil nil nil nil)
+#+END_SRC
+
+We didn't get any printed-out statements. That is because the side effects are
+not produced until the sequence is consumed. It is _lazy_. If we want to force
+evaluation of the side effects, we can use *doall*:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(def animal-print
+  (doall (map #(println %) animals)))
+;;-> #'user/animal-print
+#+END_SRC
