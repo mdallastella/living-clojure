@@ -3,7 +3,6 @@
 #+EMAIL: marco@dallastella.name
 #+LANGUAGE: en
 #+STARTUP: align hidestars lognotestate
-#+INTERLEAVE_PDF: /Users/kral/Copy/Books/Programming/Clojure/Living_Clojure.pdf
 
 * Flow and functional transformations
 
@@ -21,7 +20,7 @@ evaluated for a result and /form/ is a *valid* expression that can be evaluated.
 ** Controlling the flow with logic
 
 As we already seen, Clojure has a boolean data type. How can we tell if
-something is true? With the function *true?*. It's a Clojure convention to
+something is true? With the function ~true?~. It's a Clojure convention to
 naming the functions that returns a boolean with a question mark at the end.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -32,7 +31,7 @@ naming the functions that returns a boolean with a question mark at the end.
 ;;-> false
 #+END_SRC
 
-There is also a *false?* function:
+There is also a ~false?~ function:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (false? false)
@@ -42,8 +41,8 @@ There is also a *false?* function:
 ;;-> false
 #+END_SRC
 
-What about other things we can test for? *nil* in Clojure represents the absence
-of a value. We can test it by using *nil?*.
+What about other things we can test for? ~nil~ in Clojure represents the absence
+of a value. We can test it by using ~nil?~.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (nil? nil)
@@ -53,7 +52,7 @@ of a value. We can test it by using *nil?*.
 ;;-> false
 #+END_SRC
 
-What about negation? There is a *not* that returns true if the parameter is a
+What about negation? There is a ~not~ that returns true if the parameter is a
 logical false, otherwise it returns false.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -67,7 +66,7 @@ logical false, otherwise it returns false.
 ;;-> true
 #+END_SRC
 
-*nil* values are treated as logically false in some logical tests. How do we
+~nil~ values are treated as logically false in some logical tests. How do we
  tell if something is equal to something else? We can use the equal sign (=).
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -81,7 +80,7 @@ logical false, otherwise it returns false.
 ;;-> true
 #+END_SRC
 
-There is also a *not=* expression, that is a shortcut for doing:
+There is also a ~not=~ expression, that is a shortcut for doing:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (not (= :drinkme 4))
@@ -95,7 +94,7 @@ There is also a *not=* expression, that is a shortcut for doing:
 
 ** Logic tests you can use on collections
 
-How to test if a collection is empty? There is the *empty?* function!
+How to test if a collection is empty? There is the ~empty?~ function!
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (empty? [:a :b :c])
@@ -114,8 +113,8 @@ How to test if a collection is empty? There is the *empty?* function!
 ;;-> true
 #+END_SRC
 
-If we look at the actual definition of *empty?* we can see that is the same
-thing as using *not seq* on the collection:
+If we look at the actual definition of ~empty?~ we can see that is the same
+thing as using ~not seq~ on the collection:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (defn my-empty? [coll]
@@ -126,16 +125,16 @@ thing as using *not seq* on the collection:
 ;;-> true
 #+END_SRC
 
-What is *seq*? In Clojure there are /collection/ and /sequence/
+What is ~seq~? In Clojure there are /collection/ and /sequence/
 abstractions. Collections are simply a collection of elements like vectors, list
 and maps.  They share the persistent immutable data structure by implementing
 the _clojure.lang.IPersistentCollection_ interface.  Collections support shared
-methods such as *count*, *conj* and *seq*.
+methods such as ~count~, ~conj~ and ~seq~.
 
-The *seq* function turns the collections into a _sequence_. A sequence is a
+The ~seq~ function turns the collections into a _sequence_. A sequence is a
 walkable list abstraction for the collection data structure and it's also
-persistent and immutable, providing the shared functions *first*, *rest* and
-*cons*. *seq* function returns nil if the collection is empty.
+persistent and immutable, providing the shared functions ~first~, ~rest~ and
+~cons~. ~seq~ function returns nil if the collection is empty.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (seq [1 2 3])
@@ -151,7 +150,7 @@ persistent and immutable, providing the shared functions *first*, *rest* and
 ;;-> nil
 #+END_SRC
 
-How to test is something is true for every element of a collection?  *every?*
+How to test is something is true for every element of a collection? ~every?~
 function can do this: it takes a _predicate_ to test and a collection. What is a
 predicate? It's just a function that returns a value used in a logic test.
 
@@ -163,7 +162,7 @@ predicate? It's just a function that returns a value used in a logic test.
 ;;-> false
 #+END_SRC
 
-The *not-any?* function takes a predicate for a collection and returns false if
+The ~not-any?~ function takes a predicate for a collection and returns false if
 it's true for any element of the collection:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -174,7 +173,7 @@ it's true for any element of the collection:
 ;;-> true
 #+END_SRC
 
-*some* takes a predicate as well for a collection, but it does something a
+~some~ takes a predicate as well for a collection, but it does something a
  little bit different: it returns the first logical true value of the predicate,
  nil otherwise.
 
@@ -192,7 +191,7 @@ logical true. Also, note that a set is a function of its members.
 ;;-> 3
 #+END_SRC
 
-So the *some* function can be used with a set to return the element, or the
+So the ~some~ function can be used with a set to return the element, or the
 first matching element of a sequence:
 
 #+BEGIN_SRC clojure
@@ -213,11 +212,11 @@ first matching element of a sequence:
 
 ** Harnessing the power of flow control
 
-We are finally ready to look at some control structures, like *if*, *when* and
-their corresponding helpful *if-let* and *when-let* expressions.
-Then we will move on with *cond* and *case*.
+We are finally ready to look at some control structures, like ~if~, ~when~ and
+their corresponding helpful ~if-let~ and ~when-let~ expressions.
+Then we will move on with ~cond~ and ~case~.
 
-*if* takes three parameters: the expression that is a logical test, the
+~if~ takes three parameters: the expression that is a logical test, the
  parameter that will be evaluated if the expression is true and the parameter
  that will be evaluated if the expression is false:
 
@@ -232,7 +231,7 @@ Then we will move on with *cond* and *case*.
 ;;-> "it's false"
 #+END_SRC
 
-There is a nice expression to combine a *let* with the *if*, in cases where you
+There is a nice expression to combine a ~let~ with the ~if~, in cases where you
 want to test something but you also want to remember it.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -250,7 +249,7 @@ want to test something but you also want to remember it.
 #+END_SRC
 
 If you only want to do one thing when your test is true and don't really care to
-do anything when it's false, you can use *when*:
+do anything when it's false, you can use ~when~:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (defn drink [need-to-grow-small]
@@ -264,7 +263,7 @@ do anything when it's false, you can use *when*:
 ;;-> nil
 #+END_SRC
 
-Similarly, there's a *when-let* function too, that binds the logical test to a
+Similarly, there's a ~when-let~ function too, that binds the logical test to a
 symbol and evaluates the expression if it's a logical true, or return nil
 otherwise.
 
@@ -274,8 +273,8 @@ otherwise.
 ;;-> "drink the bottle"
 #+END_SRC
 
-We can now control our flow of code with *if* and *when*. But what if we want to
-test for multiple things? The *cond* expression takes a pair of expressions to
+We can now control our flow of code with ~if~ and ~when~. But what if we want to
+test for multiple things? The ~cond~ expression takes a pair of expressions to
 test and an expression to then evaluate if the test expression returns a logical
 true.
 
@@ -307,8 +306,8 @@ is evaluated, none of the other tests clauses are tried.
 ;;-> "bigger then 3"
 #+END_SRC
 
-If none of the test match, nil is returned. We can also add a default clause by
-simply adding the keyword :else as the last test expression.
+If none of the test match, ~nil~ is returned. We can also add a default clause by
+simply adding the keyword ~:else~ as the last test expression.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (let [bottle "mystery"]
@@ -320,8 +319,8 @@ simply adding the keyword :else as the last test expression.
 ;;-> "unknown"
 #+END_SRC
 
-The *case* is a shortcut for the *cond* where there is only one test value and
-it can be compared with =:
+The ~case~ is a shortcut for the ~cond~ where there is only one test value and
+it can be compared with ~=~:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (let [bottle "drinkme"]
@@ -344,7 +343,7 @@ expressions.
 
 * Functions creating functions and other
 
-*partial* is a way of currying in Clojure. The technique of currying is the
+~partial~ is a way of currying in Clojure. The technique of currying is the
  process of taking a function that takes multiple arguments and transforming
  it into a single argument function.
 
@@ -373,7 +372,7 @@ function with one parameter of just the direction, with the name "Alice" already
 ready to be applied.
 
 If you want to combine multiple functions into one function, you can use
-*comp*. It takes any number of functions as its parameters and returns the
+~comp~. It takes any number of functions as its parameters and returns the
 composition of them going from _right to left_.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -403,12 +402,12 @@ composition of them going from _right to left_.
 ;;-> "Oh my! You're growing :big"
 #+END_SRC
 
-Both *partial* and *comp* are very useful ways to create elegant, concise code.
+Both ~partial~ and ~comp~ are very useful ways to create elegant, concise code.
 
 * Destructuring
 
 Destructuring allows you to assign named bindings for the elements in things
-like *vectors* and *maps*.
+like ~vectors~ and ~maps~.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (let [[color size] ["blue" "small"]]
@@ -427,7 +426,7 @@ The code without destructuring is much more verbose:
 #+END_SRC
 
 If we want to keep the whole initial data structure as a binding, there is an
-*:as* keyword that we can use:
+~:as~ keyword that we can use:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (let [[color [size] :as original] ["blue" ["small"]]]
@@ -437,7 +436,7 @@ If we want to keep the whole initial data structure as a binding, there is an
 
 Destructuring can also be applied to _maps_. In the let we can assign bindings
 to the value of keys in the map. We can even specify default values to use for
-missing key with the keyword *:or*.
+missing key with the keyword ~:or~.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (let [{flower1 :flower1 flower2 :flower2 :or {flower2 "missing"}}
@@ -446,9 +445,9 @@ missing key with the keyword *:or*.
 ;;-> "The flowers are red and missing"
 #+END_SRC
 
-To keep the whole initial data structure as a binding, *:as* works in maps too.
+To keep the whole initial data structure as a binding, ~:as~ works in maps too.
 Because most of the time you will want to give the same name to the binding as
-the name of the key, there is a nice shortcut using the *:keys* directive. It
+the name of the key, there is a nice shortcut using the ~:keys~ directive. It
 takes a vector of keys that you want to get out of the incoming map:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -458,8 +457,8 @@ takes a vector of keys that you want to get out of the incoming map:
 ;;-> "The flowers are red and blue"
 #+END_SRC
 
-The *:keys* directive works on the parameters of a function too, without the
-need of *let* for bindings:
+The ~:keys~ directive works on the parameters of a function too, without the
+need of ~let~ for bindings:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (defn flower-colors [{:keys [flower1 flower2]}]
@@ -495,11 +494,11 @@ lazy sequence. You can specify an end for the range by passing it a parameter:
 ;;-> clojure.lang.LazySeq
 #+END_SRC
 
-With no parameters, *range* default is infinity.
+With no parameters, ~range~ default is infinity.
 
-There are other ways to generate lazy sequences and infinite sequences. *repeat*
+There are other ways to generate lazy sequences and infinite sequences. ~repeat~
 can be used to generate an infinite sequence of repeated items. Just like
-*range*, if we don't specify an end, it will be infinite.
+~range~, if we don't specify an end, it will be infinite.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (repeat 3 "rabbit")
@@ -516,7 +515,7 @@ can be used to generate an infinite sequence of repeated items. Just like
 #+END_SRC
 
 What if we wanted to generated an infinite sequence of randomly generated
-number? We can use *rand-int* to generate int between 0 and 10:
+number? We can use ~rand-int~ to generate int between 0 and 10:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (rand-int 10)
@@ -529,10 +528,10 @@ number? We can use *rand-int* to generate int between 0 and 10:
 ;;-> (2 2 2 2 2)
 #+END_SRC
 
-The result isn't exactly random. The reason is that we should use *repeatedly*
-instead of *repeat*. Where repeat returns a value over and over, repeatedly
-takes a function that will be executed over and over again. *repeatedly* takes a
-function of no arguments, so we need to wrap our *rand-int* into a function.
+The result isn't exactly random. The reason is that we should use ~repeatedly~
+instead of ~repeat~. Where repeat returns a value over and over, repeatedly
+takes a function that will be executed over and over again. ~repeatedly~ takes a
+function of no arguments, so we need to wrap our ~rand-int~ into a function.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 #(rand-int 10)
@@ -546,7 +545,7 @@ function of no arguments, so we need to wrap our *rand-int* into a function.
 ;;-> (2 3 4 9 6 4 3 7 5 1)
 #+END_SRC
 
-This is *cycle*, it takes a collection as an argument and returns a lazy
+This is ~cycle~, it takes a collection as an argument and returns a lazy
 sequence of items in the collection repeated infinitely.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -554,8 +553,8 @@ sequence of items in the collection repeated infinitely.
 ;;-> ("big" "small" "big" "small" "big" "small")
 #+END_SRC
 
-So far we have only interacted with our infinite lazy sequences with *take*, but
-other Clojure sequence functions will work on it as well. *rest* returns a lazy
+So far we have only interacted with our infinite lazy sequences with ~take~, but
+other Clojure sequence functions will work on it as well. ~rest~ returns a lazy
 sequence as well:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -595,7 +594,7 @@ the way to iterate through data structures.
 #+END_SRC
 
 Although this is basic recursion, Clojure makes things easier by providing
-*loop*. We could rewrite the previous example using a *loop*:
+~loop~. We could rewrite the previous example using a ~loop~:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (def adj ["normal" "too small" "too big" "swimming"])
@@ -614,7 +613,7 @@ Although this is basic recursion, Clojure makes things easier by providing
 ;;-> ["Alice is normal" "Alice is too small" "Alice is too big" "Alice is swimming"]
 #+END_SRC
 
-Using *recur* provides a way of not "consuming the stack" for recursive calls.
+Using ~recur~ provides a way of not "consuming the stack" for recursive calls.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (defn countdown [n]
@@ -634,7 +633,7 @@ Why did we get a StackOverflow? Because in our recursive call, a new frame was
 added to the stack for every function call. That is a lot of frames and a really
 big stack, even before starting to evaluate things.
 
-We could rewrite this with a *recur* and it will actually return the result:
+We could rewrite this with a ~recur~ and it will actually return the result:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (defn countdown [n]
@@ -647,21 +646,21 @@ We could rewrite this with a *recur* and it will actually return the result:
 ;;-> 0
 #+END_SRC
 
-The *recur* is how Clojure avoid the stack consumption, by evaluating the
+The ~recur~ is how Clojure avoid the stack consumption, by evaluating the
 function arguments and defining a position where the call is going to "jump"
 back to the recursion point.
 
 * The functional shape of data transformations
 
-We will take a look at two main ways to transform collections: *map* and
-*reduce*. The result of *map* doesn't change the _shape_ of the input, that means
+We will take a look at two main ways to transform collections: ~map~ and
+~reduce~. The result of ~map~ doesn't change the _shape_ of the input, that means
 that number of elements in the resulting collection will be the same as the
-incoming collection. *reduce*, instead, can change the _shape_ of the output
+incoming collection. ~reduce~, instead, can change the _shape_ of the output
 data, cause it can change the number of elements in the collection returned.
 
 ** Map the ultimate
 
-*map* takes a function and a collection as arguments. The result of the *map*
+~map~ takes a function and a collection as arguments. The result of the ~map~
  will be a collection with the function applied to each _single_ element.
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -678,7 +677,7 @@ data, cause it can change the number of elements in the collection returned.
 ;;-> clojure.lang.LazySeq
 #+END_SRC
 
-As we can see, *map* returns a lazy sequence, this means that we can deal with
+As we can see, ~map~ returns a lazy sequence, this means that we can deal with
 infinite sequences if we like:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -696,7 +695,7 @@ observable interaction with the world. A /side effect/ is something else that
 occurs in the function that changes something in the outside world.
 
 We must be careful to make sure that the side effects are being executed when we
-want them to. In the case of *map*, just calling the function won't force the
+want them to. In the case of ~map~, just calling the function won't force the
 lazy evaluation on all the elements:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
@@ -715,10 +714,223 @@ animal-print
 
 We didn't get any printed-out statements. That is because the side effects are
 not produced until the sequence is consumed. It is _lazy_. If we want to force
-evaluation of the side effects, we can use *doall*:
+evaluation of the side effects, we can use ~doall~:
 
 #+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
 (def animal-print
   (doall (map #(println %) animals)))
 ;;-> #'user/animal-print
+#+END_SRC
+
+~map~ can also take more than one collection to map against. If more than one
+ collection is specified, it uses each collection as a parameter of the
+ function.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(def animals ["mouse" "duck" "dodo"])
+;;-> #'wonderland/animals
+
+(def colors ["brown" "black" "blue"])
+;;-> #'wonderland/colors
+
+(defn gen-animal-string [animal color]
+  (str color "-" animal))
+;;-> #'wonderland/gen-animal-string
+
+(map gen-animal-string animals colors)
+;;-> ("brown-mouse" "black-duck" "blue-dodo")
+#+END_SRC
+
+The ~map~ function will terminate when the shortest collection ends. Because of
+this, we can even use an infinite list with it:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(def animals ["mouse" "duck" "dodo"])
+;;-> #'wonderland/animals
+
+(map gen-animal-string animals (cycle ["brown" "black"]))
+;;-> ("brown-mouse" "black-duck" "brown-dodo")
+#+END_SRC
+
+** Reduce the ultimate
+
+~reduce~ form differs from ~map~ in that you can change the shape of the
+ result. ~reduce~ takes a function of two arguments: the ongoing result and the
+ element that it's processing.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(reduce + [1 2 3 4 5])
+;;-> 15
+
+(reduce (fn [r x] (+ r (* x x))) [1 2 3])
+;;-> 14
+#+END_SRC
+
+Here we squared the element before adding it to the ongoing total. It uses the
+first element as its initial value for the function.
+
+We can also specify an initial value for the result before processing the first
+element.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(reduce (fn [r x] (if (nil? x) r (conj r x)))
+        []
+        [:mouse nil :duck nil nil :lory])
+;;-> [:mouse :duck :lory]
+#+END_SRC
+
+Unlike ~map~, you cannot ~reduce~ an infinite sequence, because it will run
+until one of the input collections is empty.
+
+~map~ and ~reduce~ are fundamental expressions that we use to shape data in
+ Clojure.
+
+** Other useful data shaping expressions
+
+The last snippet of code can be written in a more elegant way using
+~filter~. For this example we are going to use ~complement~, that takes a
+function and returns a function that takes the same arguments, but returns the
+opposite truth value:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+((complement nil?) nil)
+;;-> false
+
+((complement nil?) 1)
+;;-> true
+#+END_SRC
+
+Now we can use it in our filter:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(filter (complement nil?) [:mouse nil nil :duck nil])
+;;-> (:mouse :duck)
+
+;; We could be more explicit and ask only for keywords
+(filter keyword? [:mouse nil nil :duck nil])
+;;-> (:mouse :duck)
+#+END_SRC
+
+There is also ~remove~, it takes a predicate and a collection:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(remove (complement keyword?) [:mouse nil nil :duck nil])
+;;-> (:mouse :duck)
+
+(remove nil? [:mouse nil nil :duck nil])
+;;-> (:mouse :duck)
+#+END_SRC
+
+~for~ is very useful, it allows to specify bindings for the element in the
+ collections that we want to process and then process the body of the
+ function. The result is a /lazy sequence/. If more then one collection is
+ specified in the ~for~, it will iterate over them in a nested fashion.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(for [animal [:mouse :duck :lory]]
+  (str (name animal)))
+;;-> ("mouse" "duck" "lory")
+
+(for [animal [:mouse :duck :lory]
+      color  [:red :blue]]
+  (str (name color) (name animal)))
+;;-> ("redmouse" "bluemouse" "redduck" "blueduck" "redlory" "bluelory")
+#+END_SRC
+
+~for~ supports various modifiers. One is ~:let~, it allows to specify let
+ bindings concisely within ~for~:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(for [animal [:mouse :duck :lory]
+      color [:red :blue]
+      :let [animal-str (str "animal-" (name animal))
+            color-str  (str "color-" (name color))
+            display-str (str animal-str "-" color-str)]]
+  display-str)
+;;- > ("animal-mouse-color-red" "animal-mouse-color-blue"
+;;     "animal-duck-color-red" "animal-duck-color-blue"
+;;     "animal-lory-color-red" "animal-lory-color-blue")
+#+END_SRC
+
+Then there is the ~:when~ modifier that allows the expression to be evaluated
+only if the predicate is true.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(for [animal [:mouse :duck :lory]
+      color [:red :blue]
+      :let [animal-str (str "animal-" (name animal))
+            color-str  (str "color-" (name color))
+            display-str (str animal-str "-" color-str)]
+      :when (= color :blue)]
+  display-str)
+;;-> ("animal-mouse-color-blue" "animal-duck-color-blue" "animal-lory-color-blue")
+#+END_SRC
+
+~flatten~ is another very handy and simple function. It takes any nested
+collection and returns the contents in a single flattened sequence:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(flatten [[:duck [:mouse [[:lory]]]]])
+;;-> (:duck :mouse :lory)
+#+END_SRC
+
+What if we want to change the form of the data structure? We could use ~into~
+that takes the new collection and returns all the items in the collection
+~conj~-ed on to it:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(vec '(1 2 3))
+;;-> [1 2 3]
+
+(into [] '(1 2 3))
+;;-> [1 2 3]
+#+END_SRC
+
+It can work transforming maps into ~sorted-maps~, where the key-value pairs are
+sorted by their keys:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(sorted-map :b 2 :a 1 :z 3)
+;;-> {:a 1, :b 2, :z 3}
+
+(into (sorted-map) {:b 2 :c 3 :a 1})
+;;-> {:a 1, :b 2, :c 3}
+#+END_SRC
+
+or vectors of pairs into maps:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(into {} [[:a 1] [:b 2] [:c 3]])
+;;-> {:a 1, :b 2, :c 3}
+#+END_SRC
+
+or even maps into vector pairs:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(into [] {:a 1 :b 2 :c 3})
+;;-> [[:c 3] [:b 2] [:a 1]]
+#+END_SRC
+
+Clojure's ~partition~ is useful for dividing up collections. By default,
+~partition~ only partitions up to the point where there are enough elements to
+fulfill the last partition, if we want to return the extra elements at the end
+of the partition, we should use ~partition-all~.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(partition 3 [1 2 3 4 5 6 7 8 9])
+;;-> ((1 2 3) (4 5 6) (7 8 9))
+
+(partition 3 [1 2 3 4 5 6 7 8 9 10])
+;;-> ((1 2 3) (4 5 6) (7 8 9))
+
+(partition-all 3 [1 2 3 4 5 6 7 8 9 10])
+;;-> ((1 2 3) (4 5 6) (7 8 9) (10))
+#+END_SRC
+
+~partition-by~ takes a function and applies it to every element in the
+collection. It creates a new partition every time the result changes:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter2.clj
+(partition-by #(= 6 %) [1 2 3 4 5 6 7 8 9 10])
+;;-> ((1 2 3 4 5) (6) (7 8 9 10))
 #+END_SRC
