@@ -1,0 +1,454 @@
+#+TITLE: Living Clojure - Chapter 3
+#+AUTHOR: Marco Dalla Stella
+#+EMAIL: marco@dallastella.name
+#+LANGUAGE: en
+#+STARTUP: align hidestars lognotestate
+
+* State and concurrency
+
+Clojure concurrency flows naturally from its key combination of functional style
+and immutable data structures. Let's dive in and start exploring it with /atom/.
+
+** Using atoms for independent items
+
+Atoms are designed to store the state of something that is /independent/,
+meaning we can change its value independently of changing any other state.
+
+We can create an atom using a ~def~ form and the ~atom~ form. The ~atom~ form
+creates a new atom and sets the value to the argument. To see its value, we need
+to /dereference/ it with a preceding ~@~.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def who-atom (atom :caterpillar))
+;;-> #'wonderland/who-atom
+
+who-atom
+;;-> #<Atom@228c4787: :caterpillar>
+
+@who-atom
+;;-> :caterpillar
+#+END_SRC
+
+We can change the value of an atom. These change are always made
+synchronously. The first is using ~reset!~ that replace the old value with the
+new value and returns the new value. The exclamation point is an idiomatic way
+in Clojure to indicate that a function changes state:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(reset! who-atom :chrysalis)
+;;-> :chrysalis
+
+@who-atom
+;;-> :chrysalis
+#+END_SRC
+
+The ~swap!~ form applies a function on the old value of the atom and sets it to
+the new value. When we call ~swap!~ on the atom, it applies the function on the
+atom's current value and sets the value to the result of the function.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def who-atom (atom :caterpillar))
+;;-> #'wonderland/who-atom
+
+@who-atom
+;;-> :caterpillar
+
+(defn change [state]
+  (case state
+    :caterpillar :chrysalis
+    :chrysalis :butterfly
+    :butterfly))
+;;-> #'wonderland/change
+
+(swap! who-atom change)
+
+@who-atom
+;;-> :chrysalis
+
+(swap! who-atom change)
+;;-> :butterfly
+
+@who-atom
+;;-> :butterfly
+#+END_SRC
+
+Something to keep in mind when using ~swap!~ is that the function used *must* be
+free of side effects. ~swap!~ operator reads the value of the atom and applies
+the function on it and then it compares the current value of the atom again to
+make sure that another thread hasn't changed it. If the value has changed, it
+will retry, so any side effects in the function might be executed multiple
+times.
+
+~swap!~ behave like this to ensure that the operation we are performing is
+atomic. Dereferencing the atom will never block or interfere with the
+operations.
+
+Another example. We are going to have an atom named ~counter~ with initial value
+of 0. Then we are going to use ~dotimes~ that takes a form and executes a number
+of times for side effects and executes a ~swap!~ on our counter to increment it:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def counter (atom 0))
+;;-> #'wonderland/counter
+
+@counter
+;;-> 0
+
+(dotimes [_ 5] (swap! counter inc))
+;;-> nil
+
+@counter
+;;-> 5
+#+END_SRC
+
+This is fine. But we just have one thread. What if we introduce multiple
+threads? We don't need to manipulate threads directly in Clojure, we can use the
+~future~ form, that takes a body and executes it in another thread.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def counter (atom 0))
+;;-> #'wonderland/counter
+
+@counter
+;;-> 0
+
+(let [n 5]
+  (future (dotimes [_ n] (swap! counter inc)))
+  (future (dotimes [_ n] (swap! counter inc)))
+  (future (dotimes [_ n] (swap! counter inc))))
+;;-> #<core$future_call$reify__6320@66be69eb: nil>
+
+@counter
+;;-> 15
+#+END_SRC
+
+And works just fine. What if we introduce a side effect in the function we are
+using with ~swap!~?
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def counter (atom 0))
+;;-> #'wonderland/counter
+
+(defn inc-print [val]
+  (println val)
+  (inc val))
+;;-> #'wonderland/inc-print
+
+(let [n 2]
+  (future (dotimes [_ n] (swap! counter inc-print)))
+  (future (dotimes [_ n] (swap! counter inc-print)))
+  (future (dotimes [_ n] (swap! counter inc-print))))
+;; 0
+;; 1
+;; 2
+;; 2
+;; 3
+;; 4
+;; 5
+;;-> #<core$future_call$reify__6320@4654a51c: :pending>
+
+@counter
+;;-> 6
+#+END_SRC
+
+Whops, as we can see, the number 2 printed out twice and this is from the
+~swap!~ retrying. Even with three threads going, the incrementing of the value
+was consistent and atomic. Just remember to keep your ~swap!~ function
+side-effect free.
+
+Atoms is used for independent and synchronous state changes. What if we need to
+change things in a coordinated way? This is where Clojure's refs come in. They
+allow this coordinated shared state. They differs from atoms in that you need to
+change their values within a transaction. Clojure uses something called
+/software transnactional memory (STM)/ to accomplish this. Refs use this STM to
+coordinate changes of state.
+** Using Refs for coordinated changes
+
+All actions on refs within the transaction are:
+
+- /Atomic/ :: Within the transaction the updates will occur to all the refs, or
+              if something goes wrong, none of them will be updated.
+
+- /Consistent/ :: An optional validator function can be used with the refs to
+                  check value before the transaction commits.
+
+- /Isolated/ :: A transaction has its own isolated view of the world. If another
+                transaction is also running at the same time, the current
+                transaction will not see any effects from it.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def alice-height (ref 3))
+;;-> #'wonderland/alice-height
+
+(def right-hand-bites (ref 10))
+;;-> #'wonderland/right-hand-bites
+
+@alice-height
+;;-> 3
+
+@right-hand-bites
+;;-> 10
+#+END_SRC
+
+Let's define a function that will increment ~alice-height~ by 24 every time
+~right-hand-bites~ decrements. We are going to use the ~alter~ form which takes
+a ref and a function to apply to the current value (very similar to ~swap!~ with
+atoms):
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defn eat-from-right-hand []
+  (when (pos? @right-hand-bites)
+    (alter right-hand-bites dec)
+    (alter alice-height #(+ % 24))))
+;;-> #'wonderland/eat-from-right-hand
+#+END_SRC
+
+We need to run this function in a transaction and we're doing this using a
+~dosync~ form. This will coordinate any state changes within the form in
+transaction:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(dosync (eat-from-right-hand))
+;;-> 27
+#+END_SRC
+
+Let's move ~dosync~ into ~eat-from-right-hand~ and let's test out concurrency
+having three different threads calling it.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def alice-height (ref 3))
+;;-> #'wonderland/alice-height
+
+(def right-hand-bites (ref 10))
+;;-> #'wonderland/right-hand-bites
+
+(defn eat-from-right-hand []
+  (dosync (when (pos? @right-hand-bites)
+            (alter right-hand-bites dec)
+            (alter alice-height #(+ % 24)))))
+;;-> #'wonderland/eat-from-right-hand
+
+(let [n 2]
+  (future (dotimes [_ n] (eat-from-right-hand)))
+  (future (dotimes [_ n] (eat-from-right-hand)))
+  (future (dotimes [_ n] (eat-from-right-hand))))
+
+@alice-height
+;;-> 147
+
+@right-hand-bites
+;;-> 4
+#+END_SRC
+
+The function of the ~alter~ must be side-effect free just like the ~swap!~
+should be. The reason is the same: there could be retries.
+
+We could use another function called ~commute~. It must be called in a
+transaction, like ~alter~, and also take a /ref/ and a function. The difference
+between them is that ~commute~ will *not* retry during the transaction. Instead
+it will use an /in-transaction-value/ in the meantime, setting the /ref/ value
+at the commit point in the transaction. Note that the function ~commute~ applies
+must be /commutative/ or have a last-one-in-wins behavior.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def alice-height (ref 3))
+;;-> #'wonderland/alice-height
+
+(def right-hand-bites (ref 10))
+;;-> #'wonderland/right-hand-bites
+
+(defn eat-from-right-hand []
+  (dosync (when (pos? @right-hand-bites)
+            (commute right-hand-bites dec)
+            (commute alice-height #(+ % 24)))))
+;;-> #'wonderland/eat-from-right-hand
+
+(let [n 2]
+  (future (dotimes [_ n] (eat-from-right-hand)))
+  (future (dotimes [_ n] (eat-from-right-hand)))
+  (future (dotimes [_ n] (eat-from-right-hand))))
+
+@alice-height
+;;-> 147
+
+@right-hand-bites
+;;-> 4
+#+END_SRC
+
+Transactions that involve time-consuming computations and a large number of refs
+are more likely to be retried. If you're looking to limit retries, this is a
+reason to prefer an /atom/ with a map of state over many /refs/.
+
+One more example. Let's have /y/ always be the value of /x/ + 2. We are going to
+be using ~ref-set~ instead of ~alter~ to reset the value of /y/.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def x (ref 1))
+;;-> #'wonderland/x
+
+(def y (ref 1))
+;;-> #'wonderland/y
+
+(defn new-values []
+  (dosync
+   (alter x inc)
+   (ref-set y (+ 2 @x))))
+;;-> #'wonderland/new-values
+
+(let [n 2]
+  (future (dotimes [_ n] (new-values)))
+  (future (dotimes [_ n] (new-values))))
+
+@x
+;;-> 5
+
+
+@y
+;;-> 7
+#+END_SRC
+
+You can do synchronous changes now with atoms and refs, but what if
+you don't care about waiting around for the answer? This is where
+/agents/ come in.
+
+** Using agents to manage changes on their own
+
+Clojure agents are used for independent and asynchronous changes. If
+there is work to be done and you don't need the results right away,
+you can hand it off to an agent for processing. We can change the
+state of an agent by using ~send~. ~send~ form takes a function to
+send to the agent. This function takes the current state of the agent
+as an argument, along with any additional arguments.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def who-agent (agent :caterpillar))
+;;-> #'wonderland/who-agent
+
+(defn change [state]
+  (case state
+    :caterpillar :chrysalis
+    :chrysalis :butterfly
+    :butterfly))
+;;-> #'wonderland/change
+
+(send who-agent change)
+
+@who-agent
+;;-> :chrysalis
+#+END_SRC
+
+The agent will only process one action at a time. Agents are almost
+like a pipeline. Actions will be also processed in the same order that
+they were dispatched. Unlike ~swap!~ and ~alter~, ~send~ returns
+immediately.
+
+~send-off~ form is the same as the ~send~ form; the difference is that
+~send-off~ should be used for potentially I/O-blocking actions. ~send~
+uses a fixed thread pool, good for CPU-bound operations, whereas
+~send-off~ uses an expandable thread pool necessary to avoid I/O-bound
+thread pool from blocking.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(send-off who-agent change)
+
+@who-agent
+;;-> :butterfly
+#+END_SRC
+
+Agents can also handle transactions within their actions, so that
+means that we could change refs within our action, or send actions
+only if the transaction commits as well. What happens when an agent
+has an exception?
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(def who-agent (agent :caterpillar))
+;;-> #'wonderland/who-agent
+
+(defn change [state]
+  (case state
+    :caterpillar :chrysalis
+    :chrysalis :butterfly
+    :butterfly))
+;;-> #'wonderland/change
+
+(defn change-error [state]
+  (throw (Exception. "Boom!")))
+;;-> #'wonderland/change-error
+
+(send who-agent change-error)
+;;-> Exception
+
+@who-agent
+;;-> :caterpillar
+
+(send-off who-agent change)
+;;-> Exception
+#+END_SRC
+
+Even if we try to send the agent the good function ~change~, we will
+see that cached error is thrown. The agent is in a failure state. This
+can be inspected with ~agent-errors~
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(agent-errors who-agent)
+;;-> (#<Exception java.lang.Exception: Boom!>)
+#+END_SRC
+
+The agent will stay in this failed state until it is restarted with
+~restart-agent~, which clear its errors and resets the state of the
+agent.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(restart-agent who-agent :caterpillar)
+;;-> :caterpillar
+
+(send who-agent change)
+
+@who-agent
+;;-> :chrysalis
+#+END_SRC
+
+Different strategies to handle errors programmatically can be defined
+when creating the agent with ~set-error-mode!~. This will control how
+the agent responds to errors. It can be either set to ~:fail~ or
+~:continue~. With ~:continue~, we can also assign an error handler
+function with ~set-error-handler-fn!~.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defn err-handler-fn [a ex]
+  (println "error " ex " value is " @a))
+;;-> #'wonderland/err-handler-fn
+
+(def who-agent (agent :caterpillar))
+;;-> #'wonderland/who-agent
+
+(set-error-mode! who-agent :continue)
+
+(set-error-handler! who-agent err-handler-fn)
+
+(send who-agent change-error)
+;;-> prints out:
+;;   error
+;;     #<Exception java.lang.Exception: Boom!>  value is  :caterpillar
+
+@who-agent
+;;-> :caterpillar
+
+;; It will continue without a restart
+(send who-agent change)
+
+@who-agent
+;;-> :chrysalis
+#+END_SRC
+
+Agent in the real world are great for coordinating work you want to do
+in a separate process. An example of this could be relaying messages
+to other system, logging to file in a safe, multithreaded way or even
+sending commands to control robots.
+
+Summary:
+
+| Type  | Communication | Coordination  |
+| Atom  | Synchronous   | Uncoordinated |
+| Ref   | Synchronous   | Coordinated   |
+| Agent | Asynchronous  | Uncoordinated |

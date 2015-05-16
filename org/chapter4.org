@@ -1,0 +1,231 @@
+#+TITLE: Living Clojure - Chapter 4
+#+AUTHOR: Marco Dalla Stella
+#+EMAIL: marco@dallastella.name
+#+LANGUAGE: en
+#+STARTUP: align hidestars lognotestate
+
+* Practical polymorphism
+
+We can express polymorphism in Clojure with multimethods. We first define the
+multimethod and a function that specifies how it is going to /dispatch/.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defmulti who-are-you class)
+;;-> nil
+
+(defmethod who-are-you java.lang.String [input]
+  (str "String - who are you? " input))
+;;-> #<MultiFn clojure.lang.MultiFn@71c51e2e>
+
+(defmethod who-are-you clojure.lang.Keyword [input]
+  (str "Keyword - who are you? " input))
+;;-> #<MultiFn clojure.lang.MultiFn@71c51e2e>
+
+(defmethod who-are-you java.lang.Long [input]
+  (str "Number - who are you? " input))
+;;-> #<MultiFn clojure.lang.MultiFn@71c51e2e>
+
+(who-are-you "Alice")
+;;-> "String - who are you? Alice"
+
+(who-are-you :alice)
+;;-> "Keyword - who are you? :alice"
+
+(who-are-you 123)
+;;-> "Number - who are you? 123"
+
+(who-are-you true)
+;;-> java.lang.IllegalArgumentException
+;; No method in multimethod 'who-are-you' for dispatch value: class
+;; java.lang.Boolean
+#+END_SRC
+
+We can also define a default dispatch method using the keyword ~:default~:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defmethod who-are-you :default [input]
+  (str "I don't know - who are you? " input))
+;;-> #<MultiFn clojure.lang.MultiFn@71c51e2e>
+
+(who-are-you true)
+;;-> "I don't know - who are you? true"
+#+END_SRC
+
+Any function can be given to dispatch on. So, we can even inspect the value of a
+map as input. What if we wanted to have a multimethod to control the
+conversation based on the input value?
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defmulti eat-mushroom (fn [height]
+                         (if (< height 3)
+                           :grow
+                           :shrink)))
+;;-> nil
+
+(defmethod eat-mushroom :grow [_]
+  "Eat the right side to grow")
+;;-> #<MultiFn clojure.lang.MultiFn@e84922c>
+
+(defmethod eat-mushroom :shrink [_]
+  "Eat the left side to shrink")
+;;-> #<MultiFn clojure.lang.MultiFn@e84922c>
+
+(eat-mushroom 1)
+;;-> "Eat the right side to grow"
+
+(eat-mushroom 9)
+;;-> "Eat the left side to shrink"
+#+END_SRC
+
+Another way to use polymorphism in Clojure is to use /protocols/. Protocols can
+handle polymorphism elegantly with groups of functions.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defprotocol BigMushroom
+  (eat-mushroom [this]))
+
+(extend-protocol BigMushroom
+  java.lang.String
+  (eat-mushroom [this]
+    (str (.toUpperCase this) " mmmm tasty!"))
+
+  clojure.lang.Keyword
+  (eat-mushroom [this]
+    (case this
+      :grow "Eat the right side!"
+      :shrink "Eat the left side!"))
+
+  java.lang.Long
+  (eat-mushroom [this]
+    (if (< this 3)
+      "Eat the right side to grow"
+      "Eat the left side to shrink")))
+
+(eat-mushroom "Big mushroom")
+;;-> "BIG MUSHROOM mmmm tasty!"
+
+(eat-mushroom :grow)
+;;-> "Eat the right side!"
+
+(eat-mushroom 1)
+;;-> "Eat the right side to grow"
+#+END_SRC
+
+We have been using protocols to add methods to existing data structure. However,
+what if we want to add our own? Clojure's answer to this is /data types/. I you
+need structured data, you can use the ~defrecord~ form that defines which fields
+the class will hold.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defrecord Mushroom [color height])
+;;-> wonderland.Mushroom
+
+(def regular-mushroom (Mushroom. "white and blue dots" "2 inches"))
+;;-> #'wonderland/regular-mushroom
+
+(class regular-mushroom)
+;;-> wonderland.Mushroom
+#+END_SRC
+
+We can get the values with the dot-dash (~.-~) form for accessing fields.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(.-color regular-mushroom)
+;;-> "white and blue dots"
+
+(.-height regular-mushroom)
+;;-> "2 inches"
+#+END_SRC
+
+We can combine the structured data and type that ~defrecord~ gives us with
+protocols to implements interfaces.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defprotocol Edible
+  (bite-right-side [this])
+  (bite-left-side [this]))
+
+(defrecord WonderlandMushroom [color height]
+  Edible
+  (bite-right-side [this]
+    (str "The " color " bite makes you grow bigger"))
+  (bite-left-side [this]
+    (str "The " color " bite makes you grow smaller")))
+;;-> wonderland.WonderlandMushroom
+
+(defrecord RegularMushroom [color height]
+  Edible
+  (bite-right-side [this]
+    (str "The " color " bite tastes bad"))
+  (bite-left-side [this]
+    (str "The " color " bite tastes bad too...")))
+;;-> wonderland.RegularMushroom
+
+(def alice-mushroom (WonderlandMushroom. "blue dots" "3 inches"))
+;;-> #'wonderland/alice-mushroom
+
+(def regular-mushroom (RegularMushroom. "brown" "1 inches"))
+;;-> #'wonderland/regular-mushroom
+
+(bite-right-side alice-mushroom)
+;;-> "The blue dots bite makes you grow bigger"
+
+(bite-left-side alice-mushroom)
+;;-> "The blue dots bite makes you grow smaller"
+
+(bite-right-side regular-mushroom)
+;;-> "The brown bite tastes bad"
+
+(bite-left-side regular-mushroom)
+;;-> "The brown bite tastes bad too..."
+#+END_SRC
+
+We will stop for a moment to talk about when to use protocols in practical
+settings. A real-world example of protocols is implementing different types of
+persistence. We can have different ~defrecord~ type persist the result to a
+database and another could persist the result to an Amazon S3 bucket.
+
+In the previous example we were using records that held structured data
+values. Sometimes we don't need it, we just need an object with a type. In this
+case we can use ~deftype~. In the next example we don't care about the color or
+the height of the mushroom:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defprotocol Edible
+  (bite-right-side [this])
+  (bite-left-side [this]))
+
+(deftype WonderlandMushroom []
+  Edible
+  (bite-right-side [this]
+    (str "The bite makes you grow bigger"))
+  (bite-left-side [this]
+    (str "The bites make you grow smaller")))
+
+(deftype RegularMushroom []
+  Edible
+  (bite-right-side [this]
+    (str "This bite tastes bad"))
+  (bite-left-side [this]
+    (str "This bite tastes bad too")))
+
+(def alice-mushroom (WonderlandMushroom.))
+;;-> #'wonderland/alice-mushroom
+
+(def regular-mushroom (RegularMushroom.))
+;;-> #'wonderland/regular-mushroom
+
+(bite-right-side alice-mushroom)
+;;-> "The bite makes you grow bigger"
+
+(bite-left-side alice-mushroom)
+;;-> "The bites make you grow smaller"
+
+(bite-right-side regular-mushroom)
+;;-> "This bite tastes bad"
+
+(bite-left-side regular-mushroom)
+;;-> "This bite tastes bad too"
+#+END_SRC
+
+So, if you want structured data, choose ~defrecord~, otherwise use ~deftype~.
