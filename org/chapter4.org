@@ -228,4 +228,37 @@ the height of the mushroom:
 ;;-> "This bite tastes bad too"
 #+END_SRC
 
-So, if you want structured data, choose ~defrecord~, otherwise use ~deftype~.
+So, if you want structured data, choose ~defrecord~, otherwise use
+~deftype~. We could actually used other ways to get the same
+result. Instead of using a /protocol/, we could have use a simple map
+to distinguish what kind of mushroom it was.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter3.clj
+(defn bite-right-side [mushroom]
+  (if (= (:type mushroom) "wonderland")
+    "The bite makes you grow bigger"
+    "The bite tastes bad"))
+
+(defn bite-left-side [mushroom]
+  (if (= (:type mushroom) "wonderland")
+    "The bite makes you grow smaller"
+    "The bite tastes bad too"))
+
+(bite-right-side {:type "wonderland"})
+;;-> "The bite makes you grow bigger"
+
+(bite-left-side {:type "wonderland"})
+;;-> "The bite makes you grow smaller"
+
+(bite-right-side {:type "regular"})
+;;-> "The bite tastes bad"
+
+(bite-left-side {:type "regular"})
+;;-> "The bite tastes bad too"
+#+END_SRC
+
+As you can see, there are multiple ways to get functions behave
+differently based on values and types. Protocols should be use
+sparingly. It's easy in Clojure to move from plain maps to records
+when you need to, so you can delay the decision of whether or not to
+use protocols.
