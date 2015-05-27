@@ -1,0 +1,191 @@
+#+TITLE: Living Clojure - Chapter 6
+#+AUTHOR: Marco Dalla Stella
+#+EMAIL: marco@dallastella.name
+#+LANGUAGE: en
+#+STARTUP: align hidestars lognotestate
+
+* Communication with core.async
+
+This library, called /core.async/, allows asynchronous and concurrent
+communication through /channels/. This allow independent threads of activity to
+communicate with one another and is an important tool for fast processing and
+communication.
+
+We create a new project called ~async-tea-party~ and include the external
+library core.async.
+
+Before we get our final code, we are going to have to learn a few things about
+how to work with channels and the async library.
+
+** Basic of core.async Channels
+
+The basics are learning how to create channels and get values on and off from
+them. How do we create a channel?
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter6.clj
+(ns async-tea-party.core
+  (:require [clojure.core.async :as async]))
+
+;; Unbuffered channel
+(def tea-channel (async/chan))
+;;-> #'async-tea-party.core/tea-channel
+#+END_SRC
+
+There are two main ways to get things on and off channels: synchronously and
+asynchronously. Let's start with the synchronous way:
+
+- ~>!!~ puts the data on the channel synchronously
+- ~<!!~ takes the data off the channel synchronously
+
+The only problem with our ~tea-channel~ now is that is /unbuffered/ right
+now. If we try to put a value on the channel, the main thread would block until
+it got taken off. We can solve this by creating a /buffered/ ~tea-channel~
+instead, by specifying the size of the buffer as we create it.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter6.clj
+(def tea-channel (async/chan 10))
+
+(async/>!! tea-channel :cup-of-tea)
+;;-> true
+
+(async/<!! tea-channel)
+;;-> :cup-of-tea
+#+END_SRC
+
+When you see ~!!~ it means a blocking call. We can close our ~tea-channel~ with
+~close!~. However, if there still values on it, they can be taken off. When the
+channel is finally empty, it will return a ~nil~.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter6.clj
+(async/>!! tea-channel :cup-of-tea-2)
+;;-> true
+
+(async/>!! tea-channel :cup-of-tea-3)
+;;-> true
+
+(async/close! tea-channel)
+;;-> nil
+
+(async/>!! tea-channel :cup-of-tea-4)
+;;-> false
+
+(async/<!! tea-channel)
+;;-> :cup-of-tea-2
+
+(async/<!! tea-channel)
+;;-> :cup-of-tea-3
+
+(async/<!! tea-channel)
+;;-> nil
+
+(async/>!! tea-channel nil)
+;; IllegalArgumentException Can't put nil on channel
+#+END_SRC
+
+Putting something on a closed channel results returns false because it has been
+closed, but we can still take off the channel the other values we put on
+there.
+
+Let's now see how we can do this asynchronously:
+
+- async put is indicated by ~>!~ and it needs to be used with a ~go~ block.
+- async get is indicated by ~<!~ and it needs to be used with a ~go~ block.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter6.clj
+(let [tea-channel (async/chan)]
+  (async/go (async/>! tea-channel :cup-of-tea-1))
+  (async/go (println "Thanks for the " (async/<! tea-channel))))
+;; Will print to stdout:
+;; Thanks for the  :cup-of-tea-1
+#+END_SRC
+
+We can set up a ~go-loop~ that will continuously execute, waiting on value from
+a channel:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter6.clj
+(def tea-channel (async/chan 10))
+
+(async/go-loop []
+  (println "Thanks for the " (async/<! tea-channel))
+  (recur))
+
+(async/>!! tea-channel :hot-cup-of-tea)
+;;-> true
+;; Will print: Thanks for the  :hot-cup-of-tea
+
+(async/>!! tea-channel :tea-with-sugar)
+;;-> true
+;; Will print: Thanks for the  :tea-with-sugar
+
+(async/>!! tea-channel :tea-with-milk)
+;;-> true
+;; Will print: Thanks for the  :tea-with-milk
+#+END_SRC
+
+There is a way with /core.async/ that we can look at multiple channels and get
+the value from the one that arrives first, using ~alts!~.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter6.clj
+(def tea-channel (async/chan 10))
+(def milk-channel (async/chan 10))
+(def sugar-channel (async/chan 10))
+
+(async/go-loop []
+  (let [[v ch] (async/alts! [tea-channel milk-channel sugar-channel])]
+    (println "Got " v " from " ch)
+    (recur)))
+
+(async/>!! sugar-channel :sugar)
+;; Will print: Got :sugar from #<ManyToManyChannel
+;; clojure.core.async.impl.channels.ManyToManyChannel@78fe6777>
+
+(async/>!! milk-channel :milk)
+;; Will print: Got :milk from #<ManyToManyChannel
+;; clojure.core.async.impl.channels.ManyToManyChannel@1bdf6c6>
+
+(async/>!! tea-channel :tea)
+;; Will print: Got :tea from #<ManyToManyChannel
+;; clojure.core.async.impl.channels.ManyToManyChannel@10b72d59>
+#+END_SRC
+
+The ability to wait for input across many channels, combined with the fact that
+these go blocks are not bound to threads and are very lightweight processes,
+make this a powerful feature. It's useful when you want to get information or
+poll endpoints across network, while not blocking your main process.
+
+** Serving tea at a core.async tea party
+
+In this tea party example, we are interested in getting our tea fast. We are
+going to use two services and when we request our tea, we'll ask to both of
+them, but returning the service that comes back the fastest. We will simulate
+calling them and having it take a random amount of time.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter6.clj
+(def google-tea-service-chan (async/chan 10))
+(def yahoo-tea-service-chan (async/chan 10))
+
+(defn random-add []
+  (reduce + (conj [] (repeat 1 (rand-int 100000)))))
+
+(defn request-google-tea-service []
+  (async/go
+    (random-add)
+    (async/>! google-tea-service-chan
+              "tea compliments of google")))
+
+(defn request-yahoo-tea-service []
+  (async/go
+    (random-add)
+    (async/>! yahoo-tea-service-chan
+              "tea compliments of yahoo")))
+
+(defn request-tea []
+  (request-google-tea-service)
+  (request-yahoo-tea-service)
+  (async/go (let [[v] (async/alts! [google-tea-service-chan yahoo-tea-service-chan])]
+              (println v))))
+#+END_SRC
+
+We have just created a Clojure project with asynchronous
+communication. /core.async/ runs with ClojureScript too, bringing asynchronous
+communication to your browser, without all the callbacks!
