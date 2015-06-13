@@ -1,0 +1,227 @@
+#+TITLE: Living Clojure - Chapter 7
+#+AUTHOR: Marco Dalla Stella
+#+EMAIL: marco@dallastella.name
+#+LANGUAGE: en
+#+STARTUP: align hidestars lognotestate
+#+BABEL: :tangle yes
+
+* Creating web application with Clojure
+
+At the end of this chapter, you will have a working Clojure web app is not only
+Clojure on the server side, but also on frontend with Clojure.
+
+** Creating web server with ClojureScript
+
+/Compojure/ is a Clojure library that provides simple routing for another
+lower-level web application library called /Ring/. /Ring/ allows web application
+to be modular, that's why there is no particular web app framework that people
+use in Clojure, rather libraries are used, composed and shared among many
+application.
+
+In our example, we are purposely going to focus on routing, JSON and simple
+ClojureScript actions so that you can get a good understanding of the basics.
+
+Let's start creating a new Leiningen project, typing ~lein new
+compojure cheshire-cat~.
+
+The ~app~ handler is the main entry point of our application. We can now add our
+~cheshire-cat~ route to the routes definition:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter7.clj
+(defroutes app-routes
+  (GET "/" [] "Hello World")
+  (GET "/cheshire-cat" [] "Smile!")
+  (route/not-found "Not Found"))
+#+END_SRC
+
+This is fun but not a lot useful. To get ready to communicate with the frontend,
+we are going to want a more flexible JSON response. /Cheshire/ happens to be a
+library for encoding and decoding JSON and it can be found on GitHub. Let's add
+~[cheshire "5.4.0"]~ to our project file.
+
+Now we are ready to change our handler to return a JSON response, using the
+/cheshire/ library. There are two main functions: ~generate-string~, which
+encodes data structures to JSON and ~parse-string~, which decodes from JSON.
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter7.clj
+(json/generate-string {:name "Cheshire Cat" :state :grinning})
+;;-> "{\"name\":\"Cheshire Cat\",\"state\":\"grinning\"}"
+
+(json/parse-string "{\"name\":\"Cheshire Cat\",\"state\":\"grinning\"}" true)
+;;-> {:name "Cheshire Cat", :state "grinning"}
+#+END_SRC
+
+Now, let's turn our responses in JSON. /Ring/ deals with maps as both request
+and response:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter7.clj
+(defroutes app-routes
+  (GET "/" [] "Hello World")
+  (GET "/cheshire-cat" []
+       {:status 200
+        :headers {"Content-Type" "application/json; charset=utf-8"}
+        :body (json/generate-string {:name "Cheshire Cat"
+                                     :status :grinning})})
+  (route/not-found "Not Found"))
+#+END_SRC
+
+Let's try it out using:
+
+#+BEGIN_SRC sh
+curl -i http://localhost:3000/cheshire-cat
+#+END_SRC
+
+We are going on now, creating an app where all the routes will be JSON
+responses. In this case we can use a Ring middleware to automate this process
+for us. First, we will update our project file includind the /ring-json/
+dependency and removing the Cheshire one, because we won't use it directly
+anymore and restart the server.
+
+We are going to remove /Cheshire/ from the namespace and add the following
+instead: ~[ring.middleware.json :as ring-json]~ and ~[ring.util.response :as
+rr]~.
+
+Now we can remove our handcrafted response, like this:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter7.clj
+(defroutes app-routes
+  (GET "/" [] "Hello World")
+  (GET "/cheshire-cat" []
+       (rr/response {:name "Cheshire Cat" :status :grinning}))
+  (route/not-found "Not Found"))
+#+END_SRC
+
+Finally we add the middleware JSON wrapping of the body in our app definition:
+
+#+BEGIN_SRC clojure clojure :tangle ../src/living_clojure/chapter7.clj
+(def app
+  (-> app-routes
+      (wrap-defaults site-defaults)
+      (ring-json/wrap-json-response)))
+#+END_SRC
+
+We have now a backend server that can handle both HTML and JSON responses.
+
+** Using Clojure in your browser with ClojureScript
+
+*ClojureScript* is a subset of the Clojure language that compiles down to
+ Javascript thanks to Google's Closure compiler.
+
+How do we get to start with it? It's just a library, so we add it to our
+/project.clj/ file and have Leiningen get it for us: ~[org.clojure/clojurescript
+"0.0-2371"]~. We'll also use a Leiningen plugin to make working with
+ClojureScript a bit easier in the plugin section, ~lein-cljsbuild~, that
+provides us the ~cljsbuild~ command and a nice REPL as well. With ~cljsbuild~ we
+also need to specify some other configuration, so we add the following in the
+/project.clj/ file:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter7.clj
+{:cljsbuild {
+             :build [{
+                      :source-paths ["src-cljs"]
+                      :compiler {
+                                 :output-to "resources/public/main.js"
+                                 :optimizations :whitespace
+                                 :pretty-print true
+                                 }
+                      }]
+             }}
+#+END_SRC
+
+Let's try it out getting a ClojureScript REPL up and running:
+
+#+BEGIN_SRC sh
+lein trampoline cljsbuild repl-rhino
+#+END_SRC
+
+It is good to remember that there are differences between Clojure and
+ClojureScript. These major differences are:
+
+- ClojureScript has Javascript interop rather than Java.
+- Although there are atoms, there are no agents or refs.
+- In ClojureScript only integer and floating-point numbers are
+  supported.
+- Of course, ClojureScript compiles to JavaScript.
+
+Let's create a ~src-cljs~ directory in the root of our project and create a
+ClojureScript file named ~core.cljs~ like this:
+
+#+BEGIN_SRC clojure :tangle ../src/living_clojure/chapter7.clj
+(ns cheshire-cat.core)
+
+(defn ^:export init []
+  (js/alert "hi"))
+#+END_SRC
+
+We use ~^:export~ to annotate that the ~init~ function will be exposed
+to the global context. Google Closure compiler can be very aggressive
+and it might even change the function names. Exporting the function
+will prevent this.
+
+Create then a cat.html file in the ~resources/public~ directory with the
+following contents:
+
+#+BEGIN_SRC html
+<!DOCTYPE html>
+<html>
+  <head><title>Cheshire Cat</title></head>
+  <body>
+    <div id="cat-name">Name</div>
+    <div id="status">Status</div>
+
+    <script type="text/javascript" src="main.js"></script>
+    <script type="text/javascript">cheshire_cat.core.init()</script>
+  </body>
+</html>
+#+END_SRC
+
+Now, start up the web server with ~lein ring server~. In another terminal run
+the follow: ~lein cljsbuild auto~. This command will start a process that will
+compile your core.cljs file and monitor the file changes, recompile when it
+detects a change.
+
+** Browser-connected REPL
+
+To do this, there is another ~cljsbuild~ REPL to use when we want to attach our
+browser to it:
+
+#+BEGIN_SRC sh
+lein trampoline cljsbuild repl-listen
+#+END_SRC
+
+This will start a ClojureScript REPL listening on port 9000. Now we need to
+connect to it on our ClojureScript code:
+
+#+BEGIN_SRC clojure
+(ns cheshire-cat.core
+  (:require [clojure.browser.repl :as repl]))
+
+(defn ^:export init []
+  (repl/connect "http://localhost:9000/repl"))
+#+END_SRC
+
+We can now manipulate the DOM, interact with our browser application, all from
+the power of our ClojureScript REPL.
+
+** Making HTTP calls with ClojureScript and cljs-http
+
+The /cljs-http/ library is a great way to handle HTTP in ClojureScript. What
+makes it even more interesting is that it uses the power of /core.async/ to
+handle these calls asynchronously. Let's add it to our /project.clj/ file and
+restart ~lein cljsbuild auto~.
+
+Edit our /core.cljs/ file to add the following code:
+
+#+BEGIN_SRC clojure
+(ns cheshire-cat.core
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [clojure.browser.repl :as repl]
+            [cljs-http.client :as http]
+            [cljs.core.async :refer [<!]]))
+
+(defn ^:export init []
+  (repl/connect "http://localhost:9000/repl")
+  (go
+    (let [response (<! (http/get "/cheshire-cat"))]
+      (js/alert (:body response)))))
+#+END_SRC
