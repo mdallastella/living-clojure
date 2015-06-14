@@ -225,3 +225,198 @@ Edit our /core.cljs/ file to add the following code:
     (let [response (<! (http/get "/cheshire-cat"))]
       (js/alert (:body response)))))
 #+END_SRC
+
+** DOM control with ClojureScript and Enfocus
+
+The /Enfocus/ library works with transformations on the DOM. For example given a
+DOM element, we can transform it by setting the content. In particular, we want
+to:
+
+- Set the "cat-name" div to the data key "name" coming from our response.
+- Set the "status" div to the data key "status" coming from our response.
+
+Enfocus handles transformations in a elegant way using the ~at~ function. We
+specify /where/ you want the transformation to take place using a CSS
+selector. Once you specify where you want the transformation, you need to
+specify what you actually want done at the node.
+
+#+BEGIN_SRC clojure
+(ns cheshire-cat.core
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [clojure.browser.repl :as repl]
+            [cljs-http.client :as http]
+            [cljs.core.async :refer [<!]]
+            [enfocus.core :as ef]))
+
+(defn ^:export init []
+  (repl/connect "http://localhost:9000/repl")
+  (go
+    (let [response (<! (http/get "/cheshire-cat"))
+          body (:body response)]
+      (ef/at "#cat-name" (ef/content (:name body)))
+      (ef/at "#status" (ef/content (:status body))))))
+#+END_SRC
+
+The /Enfocus/ ~at~ function can also handle multiple selectors with
+transformations, so we can update "cat-name" and "status" together.
+
+#+BEGIN_SRC clojure
+(ef/at "#cat-name" (ef/content (:name body))
+       "#status" (ef/content (:status body)))
+#+END_SRC
+
+What if we would like to have two transformations at one of the selectors? We
+can use the /Enfocus/ ~do->~ function:
+
+#+BEGIN_SRC clojure
+(ef/at "#cat-name" (ef/content (:name body))
+       "#status" (ef/do->
+                  (ef/content (:status body))
+                  (ef/set-style :font-size "500%")))
+#+END_SRC
+
+** Event handling with Enfocus
+
+Enfocus provides event handling functions in a separate ~events~ namespace. Here
+we can find a ~listen~ function:
+
+#+BEGIN_SRC clojure
+(listen :click (fn [event]))
+#+END_SRC
+
+Try this out adding a button to our HTML page and add a ~listen~ function to it.
+
+#+BEGIN_SRC clojure
+(ef/at "#button1" (ev/listen
+                   :click
+                   #(js/alert "bye!")))
+#+END_SRC
+
+Enfocus can also do also cool stuff like animations. So, when we are going to
+click on the Goodbye button, we can fade everything out, making the grinning
+text fade out slower than others. We can use the ~fade-out~ function in the
+~effects~ namespace, that takes an ~integer~ argument of how long the animation
+will take.
+
+#+BEGIN_SRC clojure
+(defn say-goodbye []
+  (ef/at
+   "#cat-name" (ee/fade-out 500)
+   "#button1" (ee/fade-out 500)
+   "#status" (ee/fade-out 5000)))
+#+END_SRC
+
+** Other useful web development libraries
+
+*** Using Hiccup for templating
+
+/Hiccup/ uses vectors with keywords to generate HTML structures, here is an
+example of a form:
+
+#+BEGIN_SRC clojure
+(use 'hiccup.core)
+
+(html
+ [:h1 "Hi there"]
+ [:div.blue "blue div"
+  [:div.yellow "yellow div"
+   [:div#bob "id bob"]]])
+;;-> "<h1>Hi there</h1>
+;;    <div class=\"blue\">blue div
+;;      <div class=\"yellow\">yellow div
+;;        <div id=\"bob\">id bob</div>
+;;      </div>
+;;    </div>"
+#+END_SRC
+
+*** Using Enlive for templating from static HTML files
+
+/Enlive/ also does server-side generating of HTML, but it takes a different
+approach, using static HTML files as templates and applying transformations on
+them.
+
+#+BEGIN_SRC clojure
+(require '[net.cgrand.enlive-html :as enlive])
+
+(def my-snippet (enlive/html-snippet
+                 "<div id='foo'><p>Buttered Scones</p></div"))
+#+END_SRC
+
+Now that we have our snippet, we can do transformations on it using the ~at~
+form.
+
+#+BEGIN_SRC clojure
+(enlive/at my-snippet [:dev#foo] (enlive/html-content "Marmalade"))
+#+END_SRC
+
+*** Using Liberator for content negotiation and other good things
+
+/Liberator/ is a very useful library that fits nicely with /Ring/. One really
+useful things it allows you to do is content negotiation. Liberator checks the
+media type in the ~Accept~ request header and makes decisions based on it.
+
+#+BEGIN_SRC clojure
+(ANY "/cat" []
+     (resource :available-media-types ["text/plain" "text/html" "application/json"]
+               :handle-ok #(let [media-type (get-in % [:representation :media-type])]
+                             (case media-type
+                               "text/plain" "Cat"
+                               "text/html" "<html><h2>Cat</h2></html"
+                               "application/json" {:cat true}))
+               :handle-not-acceptable "No cats here!"))
+#+END_SRC
+
+Liberator /resource/ is used to define the available media types for this
+route. ~/cat~ route will accept ~text/plain~, ~text/html~ and
+~application/json~.
+
+*** Using Transit for a small, fast JSON alternative
+
+/Transit/, released by Rich Hickey and Cognitect, is a set of libraries and a
+format for sending data between applications. The main advantage over JSON is
+that it has an integrated cache code system that makes it very small and
+fast. To encode some data in Transit, you need to specify a byte array output
+stream and a Transit writer:
+
+#+BEGIN_SRC clojure
+(require '[cognitect.transit :as transit])
+(import [java.io.ByteArrayInputStream ByteArrayOutputStream])
+
+(def out (ByteArrayOutputStream. 4096))
+(def writer (transit/writer out :json))
+
+(transit/write writer "cat")
+
+(.toString out)
+;;-> "[\"~#'\",\"cat\"]"
+#+END_SRC
+
+The process to read the data from a /transit/ input stream is similar:
+
+#+BEGIN_SRC clojure
+(def in (ByteArrayInputStream. (.toByteArray out)))
+(def reader (transit/reader in :json))
+
+(transit/read reader)
+;;-> "cat"
+#+END_SRC
+
+Transit works in ClojureScript as well with transit-cljs.
+
+*** Using Om for powerful client-side application
+
+/Om/ is the ClojureScript interface for Facebook's /React/. It uses /components/
+to create applications and one of its advantages the /reactive/ nature of
+it. There is a bit of learning curve to get going on an Om application but
+luckily there are some really good tutorials online, try this [[https://github.com/omcljs/om/wiki/Basic-Tutorial][Basic Om Tutorial]]
+by David Nolen.
+
+*** Dealing with databases
+
+The usual thing to do in a Ring application is just create routes to read and
+write from the database and create a function to do it. Libraries to choose
+from:
+
+- *java.jdbc*: a lower-level wrapper for JDBC.
+- *Korma*: an abstraction for SQL queries.
+- *Yesql*: allows you to keep your SQL queries decoupled.

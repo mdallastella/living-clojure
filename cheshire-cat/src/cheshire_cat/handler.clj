@@ -13,5 +13,5 @@
 
 (def app
   (-> app-routes
-      (wrap-defaults site-defaults)
-      (ring-json/wrap-json-response)))
+      (ring-json/wrap-json-response)
+      (wrap-defaults site-defaults)))
